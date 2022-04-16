@@ -1,0 +1,27 @@
+[Unit]
+Description=C-Lightning daemon
+{% if cl_wait_for_bitcoind %}
+Requires=bitcoind.service
+After=bitcoind.service
+{% endif %}
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart={{ cl_install_path }}/lightningd --daemon --conf {{ cl_config }} --pid-file={{ cl_pid_file }} --log-file={{ cl_log_file }}
+RuntimeDirectory=lightningd
+
+User={{ cl_user }}
+Group={{ cl_group }}
+Type=forking
+PIDFile=/run/lightningd/lightningd.pid
+Restart=on-failure
+
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateDevices=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target

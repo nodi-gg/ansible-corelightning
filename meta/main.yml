@@ -1,0 +1,16 @@
+galaxy_info:
+  author: Djuri Baars
+  namespace: nodi
+  role_name: corelightning
+  description: Set up core-lightning from source
+  license: MIT
+  min_ansible_version: 2.1
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+  galaxy_tags: [bitcoin, lightning, bitcoind, clightning, corelightning]
+dependencies: []

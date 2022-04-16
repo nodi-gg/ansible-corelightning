@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include nodi.corelightning"
+      include_role:
+        name: "nodi.corelightning"

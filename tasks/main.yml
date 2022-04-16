@@ -1,0 +1,95 @@
+---
+# tasks file for corelightning
+- name: corelightning install required dependencies
+  ansible.builtin.package:
+    name: "{{ cl_deps }}"
+    state: latest
+
+- name: corelightning install pip dependencies
+  pip:
+    name: "{{ cl_pip_deps }}"
+
+- name: check lightning-cli executable is present in PATH
+  shell: "which lightning-cli"
+  register: clcli_exists
+  ignore_errors: true
+
+- name: corelightning git checkout
+  ansible.builtin.git:
+    repo: '{{ cl_repo }}'
+    dest: "{{ cl_src_dir }}"
+    version: "{{ cl_branch }}"
+  when: clcli_exists.rc != 0
+
+- name: corelightning poetry install
+  command: "poetry install"
+  args:
+    chdir: "{{ cl_src_dir }}"
+  when: clcli_exists.rc != 0
+
+- name: corelightning configure
+  command: "./configure {{ cl_configure_options }}"
+  args:
+    chdir: "{{ cl_src_dir }}"
+  when: clcli_exists.rc != 0
+
+- name: corelightning compile
+  command: "poetry run make {{ cl_make_params }}"
+  args:
+    chdir: "{{ cl_src_dir }}"
+  when: clcli_exists.rc != 0
+
+- name: corelightning install
+  command: "make install"
+  args:
+    chdir: "{{ cl_src_dir }}"
+  when: clcli_exists.rc != 0
+
+- name: corelightning create system group
+  group:
+    name: "{{ cl_group }}"
+    system: true
+    state: present
+
+- name: corelightning create system user
+  user:
+    name: "{{ cl_user }}"
+    system: true
+    shell: "/usr/sbin/nologin"
+    group: "{{ cl_group }}"
+    createhome: false
+    home: "{{ cl_data_dir }}"
+
+- name: corelightning create data directory
+  file:
+    path: "{{ cl_data_dir }}"
+    state: directory
+    owner: "{{ cl_user }}"
+    group: "{{ cl_group }}"
+    mode: 0755
+
+- name: corelightning create log directory
+  file:
+    path: "{{ cl_log_dir }}"
+    state: directory
+    owner: "{{ cl_user }}"
+    group: "{{ cl_group }}"
+    mode: 0755
+
+- name: corelightning create config directory
+  file:
+    path: "{{ cl_config_dir }}"
+    state: directory
+    owner: "{{ cl_user }}"
+    group: "{{ cl_group }}"
+    mode: 0755
+
+- name: corelightning install systemd unit file
+  template: src=lightning.service.j2 dest=/etc/systemd/system/lightning.service
+
+- name: corelightning ensure service is started and enabled
+  systemd:
+    daemon_reload: true
+    name: lightning
+    state: started
+    enabled: true
